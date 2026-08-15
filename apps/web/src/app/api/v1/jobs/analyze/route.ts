@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { matchesSkill } from "@/lib/utils";
 import { serverStore } from "@/lib/server-store";
 
 export async function POST(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       "System Design", "Distributed Systems", "Machine Learning", "EDA", "CI/CD"
     ];
 
-    const matchedSkills = techKeywords.filter((k) => new RegExp(`\\b${k}\\b`, "i").test(descLower));
+    const matchedSkills = techKeywords.filter((k) => matchesSkill(description, k));
     const requirements = (matchedSkills.length > 0 ? matchedSkills : ["Python", "SQL", "Problem Solving"]).map(
       (skill, idx) => ({
         id: `req-${idx + 1}`,

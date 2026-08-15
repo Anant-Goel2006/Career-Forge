@@ -5,6 +5,8 @@
  * Provides client-side fallback parsing so that users never encounter "Failed to fetch".
  */
 
+import { matchesSkill } from "@/lib/utils";
+
 /** Base API configuration */
 const API_BASE_URL =
   typeof window !== "undefined"
@@ -279,7 +281,7 @@ function parseClientResumeSections(text: string, filename: string): ResumeRespon
     "C++", "Go", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Pandas",
     "NumPy", "Power BI", "Excel", "Git", "PostgreSQL", "MongoDB", "TailwindCSS"
   ];
-  const foundSkills = techKeywords.filter((k) => new RegExp(`\\b${k}\\b`, "i").test(text));
+  const foundSkills = techKeywords.filter((k) => matchesSkill(text, k));
 
   sections.push({
     id: "sec-1",

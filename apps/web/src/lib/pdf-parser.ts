@@ -1,5 +1,7 @@
 import zlib from "zlib";
 
+import { matchesSkill } from "@/lib/utils";
+
 export interface ParsedSection {
   id: string;
   section_type: string;
@@ -223,7 +225,7 @@ export function segmentResumeText(text: string): ParsedSection[] {
       "C++", "Go", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Pandas",
       "NumPy", "Power BI", "Excel", "Git", "PostgreSQL", "MongoDB", "TailwindCSS"
     ];
-    const found = techKeywords.filter((k) => new RegExp(`\\b${k}\\b`, "i").test(text));
+    const found = techKeywords.filter((k) => matchesSkill(text, k));
     if (found.length > 0) {
       sections.push({
         id: `sec-${sections.length + 1}`,
