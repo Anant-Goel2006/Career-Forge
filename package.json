@@ -7,11 +7,11 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspace=apps/web",
-    "lint": "npm run lint --workspace=apps/web",
-    "typecheck": "npm run typecheck --workspace=apps/web",
-    "test": "npm run test --workspace=apps/web",
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "lint": "npm --prefix apps/web run lint",
+    "typecheck": "npm --prefix apps/web run typecheck",
+    "test": "npm --prefix apps/web run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "engines": {
