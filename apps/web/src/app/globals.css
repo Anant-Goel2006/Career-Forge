@@ -1,0 +1,329 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * ============================================================
+ * CareerForge AI — Shining Metallic Black & Glass Design System
+ * 75% Shining Metallic Black, 20% Crisp White Typography, 5% Violet Neon
+ * ============================================================
+ */
+
+:root {
+  --cf-bg: #010103;
+  --cf-bg-secondary: #06060a;
+  --cf-surface: rgba(255, 255, 255, 0.04);
+  --cf-surface-hover: rgba(255, 255, 255, 0.075);
+  --cf-surface-active: rgba(255, 255, 255, 0.095);
+  --cf-border: rgba(255, 255, 255, 0.09);
+  --cf-border-hover: rgba(255, 255, 255, 0.18);
+  --cf-border-strong: rgba(255, 255, 255, 0.28);
+
+  --cf-white: #ffffff;
+  --cf-muted: #a1a1aa;
+  --cf-subtle: #71717a;
+
+  --cf-purple: #8b5cf6;
+  --cf-purple-light: #a78bfa;
+  --cf-purple-dark: #6d28d9;
+  --cf-purple-glow: rgba(139, 92, 246, 0.35);
+  --cf-purple-glow-subtle: rgba(139, 92, 246, 0.12);
+
+  /* Next UI / Shadcn compatibility tokens */
+  --radius: 1rem;
+  --background: #010103;
+  --foreground: #ffffff;
+  --card: rgba(255, 255, 255, 0.04);
+  --card-foreground: #ffffff;
+  --popover: #06060a;
+  --popover-foreground: #ffffff;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #ffffff;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #a1a1aa;
+  --accent: rgba(139, 92, 246, 0.15);
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #8b5cf6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--cf-border);
+  }
+
+  body {
+    background-color: var(--cf-bg);
+    color: var(--cf-white);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    overflow-x: hidden;
+    position: relative;
+    letter-spacing: -0.01em;
+  }
+
+  /* Live Animated Metallic Shimmer Sheen Mesh with Specular Waves */
+  body::before {
+    content: "";
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: -10;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.2), transparent 45%),
+      radial-gradient(ellipse at 80% 25%, rgba(255, 255, 255, 0.09), transparent 35%),
+      radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.15), transparent 50%),
+      radial-gradient(ellipse at 85% 85%, rgba(216, 180, 254, 0.12), transparent 45%),
+      radial-gradient(ellipse at 15% 80%, rgba(255, 255, 255, 0.06), transparent 40%),
+      linear-gradient(125deg, #010103 0%, #080811 25%, #020206 50%, #0c0b18 75%, #010103 100%);
+    background-size: 150% 150%;
+    animation: metallicShineWave 14s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -9;
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 70%),
+      radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.1), transparent 60%);
+    pointer-events: none;
+    opacity: 0.9;
+  }
+
+  @keyframes metallicShineWave {
+    0% {
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      filter: brightness(1) contrast(1.05);
+    }
+    50% {
+      transform: translate(-2.5%, 2%) rotate(1deg) scale(1.03);
+      filter: brightness(1.18) contrast(1.12);
+    }
+    100% {
+      transform: translate(2.5%, -2%) rotate(-1deg) scale(0.98);
+      filter: brightness(1) contrast(1.05);
+    }
+  }
+
+  /* Custom metallic scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(167, 139, 250, 0.5);
+  }
+}
+
+/*
+ * ============================================================
+ * Core Glassmorphic & Metallic Component Classes
+ * ============================================================
+ */
+
+.cf-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.015)
+  );
+  border: 1px solid var(--cf-border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 20px 70px rgba(0, 0, 0, 0.65);
+}
+
+.cf-glass:hover {
+  background: var(--cf-surface-hover);
+  border-color: var(--cf-border-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 25px 90px rgba(0, 0, 0, 0.75),
+    0 0 40px rgba(139, 92, 246, 0.12);
+}
+
+.cf-glass-card,
+.glass-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.045),
+    rgba(255, 255, 255, 0.012)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 20px 80px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cf-glass-card:hover,
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 90px rgba(0, 0, 0, 0.7),
+    0 0 35px rgba(139, 92, 246, 0.14);
+}
+
+.cf-glow {
+  box-shadow:
+    0 0 30px rgba(139, 92, 246, 0.2),
+    0 0 80px rgba(139, 92, 246, 0.08);
+}
+
+.cf-text-gradient,
+.text-glow {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e2e8f0 45%,
+    #a78bfa 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.cf-button-primary {
+  background: linear-gradient(135deg, #ffffff 0%, #e4e4e7 100%);
+  color: #010103;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 10px 30px rgba(255, 255, 255, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.6);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.cf-button-primary:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
+  box-shadow:
+    0 15px 40px rgba(255, 255, 255, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.7);
+}
+
+.cf-button-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cf-button-secondary:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+.cf-button-purple,
+.glow-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 8px 25px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.cf-button-purple:hover,
+.glow-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 35px rgba(139, 92, 246, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Sidebar Active Item */
+.cf-sidebar-active {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.22), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+  color: #ffffff !important;
+}
+
+/* 3D Interactive Card */
+.card-3d {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card-3d:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(139, 92, 246, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

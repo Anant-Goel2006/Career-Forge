@@ -1,0 +1,23 @@
+{
+  "name": "careerforge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CareerForge AI — Evidence-backed job application intelligence platform",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "typecheck": "npm run typecheck --workspace=apps/web",
+    "test": "npm run test --workspace=apps/web",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "author": "CareerForge Team",
+  "license": "UNLICENSED"
+}

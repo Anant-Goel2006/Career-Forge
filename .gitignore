@@ -1,0 +1,82 @@
+# ============================================================
+# CareerForge AI — .gitignore
+# Covers: Next.js, Python/FastAPI, PostgreSQL, IDE, OS, Secrets
+# ============================================================
+
+# ---------- Environment & Secrets (NEVER commit) ----------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+*.pem
+*.key
+*.crt
+
+# ---------- Dependencies ----------
+node_modules/
+.pnp/
+.pnp.js
+
+# ---------- Next.js ----------
+.next/
+out/
+build/
+.vercel
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- OS ----------
+*.log
+*.tmp
+*.temp
+
+# ---------- Docker ----------
+docker-compose.override.yml
+
+# ---------- Storage / Uploads ----------
+uploads/
+storage/
+*.pdf
+*.docx
+!docs/**/*.pdf
+!docs/**/*.docx
+
+# ---------- Database ----------
+*.db
+*.sqlite
+*.sqlite3
+*.sql.bak
+*.dump
+careerforge.db

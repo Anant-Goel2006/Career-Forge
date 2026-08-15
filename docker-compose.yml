@@ -1,0 +1,31 @@
+# ============================================================
+# CareerForge AI — Local Development Services
+# Usage: docker-compose up -d
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ---------- PostgreSQL + pgvector ----------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: careerforge-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: careerforge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./CareerForge_AI_Master_Documentation/05_backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d careerforge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local

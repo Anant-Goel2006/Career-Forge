@@ -1,0 +1,15 @@
+Resource/Action,Guest,User,Admin
+Landing,Allow,Allow,Allow
+Upload resume,Deny,Allow,Allow
+Read own resume,Deny,Allow,Allow
+Read another user's resume,Deny,Deny,Deny
+Edit own resume,Deny,Allow,Allow
+Run audit,Deny,Allow,Allow
+Analyze job,Deny,Allow,Allow
+Tailor resume,Deny,Allow,Allow
+Export own resume,Deny,Allow,Allow
+Read own applications,Deny,Allow,Allow
+Manage own drafts,Deny,Allow,Allow
+Automatic bulk messaging,Deny,Deny,Deny
+Manage users,Deny,Deny,Allow
+View security logs,Deny,Deny,Allow
