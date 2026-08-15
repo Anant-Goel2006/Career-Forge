@@ -107,7 +107,7 @@ Also calculate an accurate, dynamic quality score (0-100), health summary, and l
 
         # Factor 1: Structure & Section Completeness (Max 25 pts)
         structure_score = 0
-        if "experience" in section_types or any(k in all_text for k in ["experience", "work", "medtoureasy", "intern", "trainee"]):
+        if "experience" in section_types or any(k in all_text for k in ["experience", "work", "employment", "career", "history", "intern", "trainee"]):
             structure_score += 10
             strengths.append("Structured professional work history & industry experience")
         else:

@@ -38,7 +38,6 @@ export default function DashboardOverviewPage() {
   });
 
   useEffect(() => {
-    // Automated real-time state synchronization
     if (typeof window !== "undefined") {
       // 1. Resume & Health Score
       const storedScore = localStorage.getItem("careerforge_latest_score");
@@ -51,6 +50,37 @@ export default function DashboardOverviewPage() {
         setResumesCount(1);
       }
 
+      // Check cached parsed resume to pick optimal top job match
+      try {
+        const cached = localStorage.getItem("careerforge_parsed_resume");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const skillSec = parsed.sections?.find((s: any) => s.section_type === "skills");
+          if (skillSec?.raw_text) {
+            const userSkills = skillSec.raw_text.toLowerCase();
+            // Find job with highest skill overlap
+            let bestJob = VERIFIED_JOB_DATABASE[0];
+            let maxOverlap = -1;
+
+            for (const j of VERIFIED_JOB_DATABASE) {
+              const overlap = j.skills.filter((sk) => userSkills.includes(sk.toLowerCase())).length;
+              if (overlap > maxOverlap) {
+                maxOverlap = overlap;
+                bestJob = j;
+              }
+            }
+
+            const dynamicScore = Math.min(99, Math.max(85, 85 + Math.round((maxOverlap / Math.max(bestJob.skills.length, 1)) * 14)));
+            setTopJob({
+              title: bestJob.title,
+              company: bestJob.company,
+              location: bestJob.location,
+              matchScore: dynamicScore,
+            });
+          }
+        }
+      } catch {}
+
       // 2. Application Pipeline synchronization
       try {
         const storedApps = localStorage.getItem("careerforge_saved_applications");
@@ -59,14 +89,11 @@ export default function DashboardOverviewPage() {
           if (Array.isArray(parsed)) {
             setApplicationsCount(parsed.length);
             const appliedOnly = parsed.filter((a: any) => a.status === "applied").length;
-            setOutreachCount(appliedOnly || 3);
+            setOutreachCount(appliedOnly || parsed.length);
           }
-        } else {
-          setApplicationsCount(3);
-          setOutreachCount(2);
         }
       } catch {
-        setApplicationsCount(3);
+        setApplicationsCount(0);
       }
     }
 
@@ -81,12 +108,10 @@ export default function DashboardOverviewPage() {
             title: first.title,
             company: first.company,
             location: first.location || "Remote",
-            matchScore: 95,
+            matchScore: 96,
           });
         }
-      } catch (err) {
-        // Backend not initialized with jobs yet
-      }
+      } catch (err) {}
     }
 
     loadJobs();
@@ -136,11 +161,11 @@ export default function DashboardOverviewPage() {
         {/* Row 3: Market Insights Strip (12) */}
         <div className="col-span-12">
           <MarketInsights
-            targetRole="Data Analytics & Business Intelligence"
-            topSkills="SQL, Python, Power BI, Statistics, Pandas"
-            demandTrend="High Growth (+28% YoY)"
-            salaryRange="₹8L - ₹18L (India) / $70K - $120K (Remote)"
-            marketStatus="Actively Hiring in Analytics"
+            targetRole="Full Stack Engineering & Data Intelligence"
+            topSkills="TypeScript, React, Python, SQL, Cloud Architecture"
+            demandTrend="High Growth (+32% YoY)"
+            salaryRange="₹12L - ₹28L (India) / $95K - $160K (Remote/US)"
+            marketStatus="Actively Hiring across Tech Giants & Startups"
           />
         </div>
       </div>
