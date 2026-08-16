@@ -215,6 +215,7 @@ function AssistantContent() {
 
   const [activeView, setActiveView] = useState<"preview" | "editor">("preview");
   const [resumeData, setResumeData] = useState<ResumeContent>(DEFAULT_GENERIC_RESUME);
+  const [docxBase64, setDocxBase64] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessageItem[]>([
     {
       role: "assistant",
@@ -315,10 +316,13 @@ function AssistantContent() {
         if (res.resume_data) {
           setResumeData(res.resume_data as ResumeContent);
         }
+        if (res.docx_base64) {
+          setDocxBase64(res.docx_base64);
+        }
 
         const aiMsg: ChatMessageItem = {
           role: "assistant",
-          content: `✓ Successfully analyzed the requirements and tailored your resume for **${company}**. Strategic keywords, impact metrics, and core frameworks have been aligned in real time!`,
+          content: `✓ Successfully analyzed the requirements and tailored your resume for **${company}**. Strategic keywords, impact metrics, and core frameworks have been aligned in real time! You can now download the DOCX.`,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, aiMsg]);
@@ -354,10 +358,10 @@ function AssistantContent() {
         };
         setMessages((prev) => [...prev, aiMsg]);
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMsg: ChatMessageItem = {
         role: "assistant",
-        content: "I have updated your resume with the requested modifications.",
+        content: `❌ Error: ${err.message || "Failed to process your request."} Please try again.`,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -366,8 +370,12 @@ function AssistantContent() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadDocx = () => {
+    if (!docxBase64) return;
+    const link = document.createElement("a");
+    link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${docxBase64}`;
+    link.download = `${resumeData.fullName.replace(/\s+/g, "_")}_Resume.docx`;
+    link.click();
   };
 
   const handleCopyText = () => {
@@ -408,7 +416,7 @@ function AssistantContent() {
         </div>
 
         {/* Top Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setActiveView(activeView === "preview" ? "editor" : "preview")}
             className="cf-button-secondary flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold"
@@ -417,20 +425,22 @@ function AssistantContent() {
             <span>{activeView === "preview" ? "Edit Data Manually" : "View 1-Page Template"}</span>
           </button>
 
+          {docxBase64 && (
+            <button
+              onClick={handleDownloadDocx}
+              className="cf-button-primary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Download DOCX</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyText}
             className="cf-button-secondary flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
             <span>{copied ? "Copied" : "Copy Plaintext"}</span>
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="cf-button-primary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            <span>Print / Save 1-Page PDF</span>
           </button>
         </div>
       </div>
@@ -556,14 +566,16 @@ function AssistantContent() {
               </div>
 
               {/* Summary */}
-              <div className="mb-2.5">
-                <h2 className="text-[10.5px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 font-sans text-black">
-                  Professional Summary
-                </h2>
-                <p className="text-[10.5px] text-zinc-900 leading-relaxed font-sans">
-                  {resumeData.summary}
-                </p>
-              </div>
+              {resumeData.summary && (
+                <div className="mb-2.5">
+                  <h2 className="text-[10.5px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 font-sans text-black">
+                    Professional Summary
+                  </h2>
+                  <p className="text-[10.5px] text-zinc-900 leading-relaxed font-sans">
+                    {resumeData.summary}
+                  </p>
+                </div>
+              )}
 
               {/* Technical Skills */}
               <div className="mb-2.5">
@@ -600,48 +612,26 @@ function AssistantContent() {
               </div>
 
               {/* Projects */}
-              <div className="mb-2.5">
-                <h2 className="text-[10.5px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 font-sans text-black">
-                  Key Technical Projects
-                </h2>
-                {resumeData.projects.map((p, i) => (
-                  <div key={i} className="mb-1.5 font-sans">
-                    <div className="flex items-center justify-between text-[10.5px] font-bold text-black">
-                      <span>{p.name}</span>
-                      <span className="text-[9.5px] font-normal text-zinc-600">{p.tech}</span>
+              {resumeData.projects && resumeData.projects.length > 0 && (
+                <div className="mb-2.5">
+                  <h2 className="text-[10.5px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 font-sans text-black">
+                    Key Technical Projects
+                  </h2>
+                  {resumeData.projects.map((p, i) => (
+                    <div key={i} className="mb-1.5 font-sans">
+                      <div className="flex items-center justify-between text-[10.5px] font-bold text-black">
+                        <span>{p.name}</span>
+                        <span className="text-[9.5px] font-normal text-zinc-600">{p.tech}</span>
+                      </div>
+                      <ul className="list-disc list-outside pl-4 space-y-0.5 mt-0.5 text-[10px] text-zinc-900 leading-normal">
+                        {p.bullets.map((b, idx) => (
+                          <li key={idx}>{b}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="list-disc list-outside pl-4 space-y-0.5 mt-0.5 text-[10px] text-zinc-900 leading-normal">
-                      {p.bullets.map((b, idx) => (
-                        <li key={idx}>{b}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-
-              {/* Certifications & Honors */}
-              <div className="grid grid-cols-2 gap-3 mb-2 font-sans">
-                <div>
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 text-black">
-                    Certifications
-                  </h2>
-                  <ul className="list-disc list-outside pl-4 space-y-0.5 text-[9.5px] text-zinc-900">
-                    {resumeData.certifications.map((c, i) => (
-                      <li key={i}>{c}</li>
-                    ))}
-                  </ul>
+                  ))}
                 </div>
-                <div>
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider border-b border-black/40 pb-0.5 mb-1 text-black">
-                    Academic Honors & Awards
-                  </h2>
-                  <ul className="list-disc list-outside pl-4 space-y-0.5 text-[9.5px] text-zinc-900">
-                    {resumeData.achievements.map((a, i) => (
-                      <li key={i}>{a}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              )}
 
               {/* Education */}
               <div className="font-sans">

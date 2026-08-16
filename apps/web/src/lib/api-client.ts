@@ -447,6 +447,37 @@ export const jobApi = {
     }
   },
 
+  search: async (params: { keywords?: string; location?: string; remote_only?: boolean; limit?: number }) => {
+    try {
+      const query = new URLSearchParams();
+      if (params.keywords) query.append("keywords", params.keywords);
+      if (params.location) query.append("location", params.location);
+      if (params.remote_only) query.append("remote_only", "true");
+      if (params.limit) query.append("limit", params.limit.toString());
+      
+      return await apiRequest<any[]>(`/v1/jobs/search?${query.toString()}`);
+    } catch (err) {
+      return [];
+    }
+  },
+
+  matchResume: async (resumeId: string, params: { keywords?: string; location?: string; remote_only?: boolean; limit?: number } = {}) => {
+    try {
+      const query = new URLSearchParams();
+      query.append("resume_id", resumeId);
+      if (params.keywords) query.append("keywords", params.keywords);
+      if (params.location) query.append("location", params.location);
+      if (params.remote_only) query.append("remote_only", "true");
+      if (params.limit) query.append("limit", params.limit.toString());
+      
+      return await apiRequest<any[]>(`/v1/jobs/match-resume?${query.toString()}`, {
+        method: "POST"
+      });
+    } catch (err) {
+      return [];
+    }
+  },
+
   list: async (): Promise<JobResponse[]> => {
     try {
       return await apiRequest<JobResponse[]>("/v1/jobs");
@@ -457,15 +488,32 @@ export const jobApi = {
 
   get: (id: string) => apiRequest<JobResponse>(`/v1/jobs/${id}`),
 
+  findRecruiter: async (jobId: string) => {
+    try {
+      return await apiRequest<any[]>(`/v1/jobs/${jobId}/recruiter-lookup`);
+    } catch (err) {
+      return [];
+    }
+  },
+
+  getBoostSuggestions: async (jobId: string, resumeId: string) => {
+    try {
+      return await apiRequest<any>(`/v1/jobs/${jobId}/boost-suggestions?resume_id=${resumeId}`);
+    } catch (err) {
+      return null;
+    }
+  },
+
   generateColdDM: async (jobId: string, resumeId: string, tone: string = "professional") => {
     try {
-      return await apiRequest<{ content: string }>(`/v1/jobs/${jobId}/cold-dm`, {
+      return await apiRequest<{ email: string, linkedin: string }>(`/v1/jobs/${jobId}/cold-dm`, {
         method: "POST",
         body: JSON.stringify({ resume_id: resumeId, tone }),
       });
     } catch (err) {
       return {
-        content: `Hello,\n\nI am writing to express my strong enthusiasm for the role. With my background building scalable solutions and delivering measurable results, I would welcome the opportunity for a brief introductory conversation.\n\nBest regards,\n[Your Name]`,
+        email: `Hello,\n\nI am writing to express my strong enthusiasm for the role. With my background building scalable solutions and delivering measurable results, I would welcome the opportunity for a brief introductory conversation.\n\nBest regards,\n[Your Name]`,
+        linkedin: `Hi! I'm interested in the role and would love to connect.`,
       };
     }
   },
@@ -506,48 +554,6 @@ export const matchApi = {
   },
 };
 
-// ============================================================
-// Application API
-// ============================================================
-
-export const applicationApi = {
-  list: async (): Promise<ApplicationResponse[]> => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("careerforge_saved_applications");
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return [];
-  },
-
-  create: async (data: {
-    job_id: string;
-    resume_version_id?: string;
-    status?: string;
-  }): Promise<ApplicationResponse> => {
-    const newApp: ApplicationResponse = {
-      id: `app-${Date.now()}`,
-      job_id: data.job_id,
-      resume_version_id: data.resume_version_id || null,
-      status: data.status || "applied",
-      applied_at: new Date().toISOString(),
-      follow_up_at: null,
-    };
-    return newApp;
-  },
-
-  update: async (id: string, data: { status: string; applied_at?: string; follow_up_at?: string }): Promise<ApplicationResponse> => {
-    return {
-      id,
-      job_id: "job-1",
-      resume_version_id: null,
-      status: data.status,
-      applied_at: data.applied_at || new Date().toISOString(),
-      follow_up_at: data.follow_up_at || null,
-    };
-  },
-};
 
 // ============================================================
 // Assistant API
@@ -605,42 +611,14 @@ export const assistantApi = {
     job_title: string,
     company: string
   ): Promise<{ resume_data: any; docx_base64: string }> => {
-    try {
-      return await apiRequest<{ resume_data: any; docx_base64: string }>("/v1/assistant/tailor", {
-        method: "POST",
-        body: JSON.stringify({
-          base_resume_text,
-          job_description,
-          job_title,
-          company,
-        }),
-      });
-    } catch (err) {
-      console.warn("Backend tailor failed, applying client-side transformation:", err);
-      let resumeData: any = null;
-      try {
-        if (typeof base_resume_text === "string" && base_resume_text.startsWith("{")) {
-          resumeData = JSON.parse(base_resume_text);
-        }
-      } catch {}
-
-      if (resumeData) {
-        resumeData = {
-          ...resumeData,
-          summary: `${resumeData.summary || ""} Tailored for ${job_title || "the role"} at ${company || "Target Company"} with focus on scalable impact and Google X-Y-Z metrics.`,
-          experience: (resumeData.experience || []).map((exp: any) => ({
-            ...exp,
-            bullets: (exp.bullets || []).map((b: string) =>
-              /\d+%/i.test(b) ? b : `${b.replace(/\.$/, "")}, achieving a 32% increase in turnaround velocity and system efficiency.`
-            ),
-          })),
-        };
-      }
-
-      return {
-        resume_data: resumeData,
-        docx_base64: "",
-      };
-    }
+    return await apiRequest<{ resume_data: any; docx_base64: string }>("/v1/assistant/tailor", {
+      method: "POST",
+      body: JSON.stringify({
+        base_resume_text,
+        job_description,
+        job_title,
+        company,
+      }),
+    });
   },
 };

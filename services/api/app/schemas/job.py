@@ -103,4 +103,5 @@ class ColdDMRequest(BaseModel):
 
 class ColdDMResponse(BaseModel):
     """Response containing the generated cold DM."""
-    content: str
+    email: str
+    linkedin: str

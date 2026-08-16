@@ -181,26 +181,31 @@ export default function UploadPage() {
 
                 {/* Workflow Direct Action Options */}
                 <div className="space-y-3">
-                  {/* Primary CTA: View Matched Jobs */}
-                  <Link
-                    href={ROUTES.JOBS}
+                  {/* Primary CTA: Run Live Job Matcher */}
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("careerforge_latest_resume_id", uploadedResumeId || "");
+                      }
+                      router.push(ROUTES.JOBS);
+                    }}
                     className="cf-button-primary w-full flex items-center justify-between p-4 rounded-2xl group transition"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/10 text-black font-bold">
                         <Briefcase className="h-5 w-5" />
                       </div>
-                      <div>
+                      <div className="text-left">
                         <h4 className="text-xs sm:text-sm font-extrabold text-black">
-                          View High-Match Jobs & Internships (95%+ Fit)
+                          Run Live Job Matcher
                         </h4>
                         <p className="text-[11px] text-zinc-800">
-                          Matched across startups, mid-market unicorns, and tech giants with recruiter contacts.
+                          Scan the live market and compute your selection chance for matched roles.
                         </p>
                       </div>
                     </div>
                     <ArrowRight className="h-5 w-5 text-black group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  </button>
 
                   {/* Secondary CTA: Executive Resume Studio */}
                   <Link

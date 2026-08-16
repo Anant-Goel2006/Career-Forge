@@ -17,7 +17,6 @@ export function CareerSnapshot({
   jobsCount = 0,
   matchesCount = 0,
   outreachCount = 0,
-  applicationsCount = 0,
   skillsCount = 0,
 }: CareerSnapshotProps) {
   const metrics = [
@@ -25,7 +24,6 @@ export function CareerSnapshot({
     { label: "Jobs Analyzed", value: jobsCount },
     { label: "Matches Generated", value: matchesCount },
     { label: "Outreach Drafts", value: outreachCount },
-    { label: "Applications Tracked", value: applicationsCount },
     { label: "Verified Skills", value: skillsCount },
   ];
 

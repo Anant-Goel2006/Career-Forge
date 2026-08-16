@@ -14,23 +14,23 @@ class ColdDMService:
     def __init__(self) -> None:
         self.ai = get_ai_provider()
 
-    async def generate_cold_dm(self, resume_text: str, job_text: str, tone: str = "professional") -> str:
+    async def generate_cold_dm(self, resume_text: str, job_text: str, tone: str = "professional") -> dict[str, str]:
         """
-        Generate a tailored cold DM/email based on a resume and job description.
+        Generate both a tailored cold email and a LinkedIn connection note based on a resume and job description.
         """
         prompt = f"""
-        You are an expert career coach helping a candidate write a cold outreach email or direct message (LinkedIn).
-        Your task is to write a highly customized, concise, and engaging message to the hiring manager or recruiter.
+        You are an expert career coach helping a candidate write cold outreach.
+        Your task is to write TWO highly customized, concise, and engaging messages to the hiring manager or recruiter.
         
         The tone should be: {tone}.
         
         Guidelines:
         - Do not invent facts, only use what is in the resume.
-        - Keep it under 150 words.
+        - LinkedIn Note: Under 300 characters, extremely concise.
+        - Email: Under 150 words, with a subject line.
         - Make a direct connection between the candidate's top relevant skill and the job's core need.
         - Include a clear call to action.
-        - Do NOT include placeholder text like [Your Name], use the information provided or keep it generic if absent.
-        - Return ONLY the text of the email/DM, with a subject line at the very top.
+        - Return a JSON object with two keys: "email" and "linkedin".
         """
         
         context = {
@@ -38,5 +38,20 @@ class ColdDMService:
             "job_description": job_text
         }
         
-        # We use generate_text because we want raw text (the email content)
-        return await self.ai.generate_text(prompt=prompt, context=context)
+        from pydantic import BaseModel
+        class OutreachVariants(BaseModel):
+            email: str
+            linkedin: str
+            
+        try:
+            result = await self.ai.generate_structured(
+                prompt=prompt,
+                response_schema=OutreachVariants,
+                context=context
+            )
+            return result.model_dump()
+        except Exception as e:
+            return {
+                "email": "Error generating email.",
+                "linkedin": "Error generating LinkedIn note."
+            }

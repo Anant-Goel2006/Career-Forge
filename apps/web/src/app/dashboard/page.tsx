@@ -15,27 +15,20 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { CareerAssistantCard } from "@/components/dashboard/CareerAssistantCard";
 import { MarketInsights } from "@/components/dashboard/MarketInsights";
 import { jobApi } from "@/lib/api-client";
-import { VERIFIED_JOB_DATABASE } from "./jobs/page";
 
 export default function DashboardOverviewPage() {
   const [latestScore, setLatestScore] = useState<number | null>(null);
   const [resumesCount, setResumesCount] = useState<number>(0);
-  const [jobsCount, setJobsCount] = useState<number>(VERIFIED_JOB_DATABASE.length);
-  const [applicationsCount, setApplicationsCount] = useState<number>(0);
+  const [jobsCount, setJobsCount] = useState<number>(0);
   const [outreachCount, setOutreachCount] = useState<number>(0);
-  const [matchesCount, setMatchesCount] = useState<number>(VERIFIED_JOB_DATABASE.length);
+  const [matchesCount, setMatchesCount] = useState<number>(0);
 
   const [topJob, setTopJob] = useState<{
     title: string;
     company: string;
     location?: string;
     matchScore: number;
-  }>({
-    title: VERIFIED_JOB_DATABASE[0].title,
-    company: VERIFIED_JOB_DATABASE[0].company,
-    location: VERIFIED_JOB_DATABASE[0].location,
-    matchScore: VERIFIED_JOB_DATABASE[0].matchScore,
-  });
+  } | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -50,51 +43,27 @@ export default function DashboardOverviewPage() {
         setResumesCount(1);
       }
 
-      // Check cached parsed resume to pick optimal top job match
+      // 2. Check cached matched jobs from the job matching pipeline
       try {
-        const cached = localStorage.getItem("careerforge_parsed_resume");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          const skillSec = parsed.sections?.find((s: any) => s.section_type === "skills");
-          if (skillSec?.raw_text) {
-            const userSkills = skillSec.raw_text.toLowerCase();
-            // Find job with highest skill overlap
-            let bestJob = VERIFIED_JOB_DATABASE[0];
-            let maxOverlap = -1;
-
-            for (const j of VERIFIED_JOB_DATABASE) {
-              const overlap = j.skills.filter((sk) => userSkills.includes(sk.toLowerCase())).length;
-              if (overlap > maxOverlap) {
-                maxOverlap = overlap;
-                bestJob = j;
-              }
-            }
-
-            const dynamicScore = Math.min(99, Math.max(85, 85 + Math.round((maxOverlap / Math.max(bestJob.skills.length, 1)) * 14)));
+        const cachedMatches = localStorage.getItem("careerforge_matched_jobs");
+        if (cachedMatches) {
+          const matches = JSON.parse(cachedMatches);
+          if (Array.isArray(matches) && matches.length > 0) {
+            setMatchesCount(matches.length);
+            setJobsCount(matches.length);
+            // Pick the top-scored job
+            const best = matches.reduce((a: any, b: any) =>
+              (a.selectionChance ?? 0) > (b.selectionChance ?? 0) ? a : b
+            );
             setTopJob({
-              title: bestJob.title,
-              company: bestJob.company,
-              location: bestJob.location,
-              matchScore: dynamicScore,
+              title: best.title,
+              company: best.company,
+              location: best.location || "Remote",
+              matchScore: best.selectionChance ?? 0,
             });
           }
         }
       } catch {}
-
-      // 2. Application Pipeline synchronization
-      try {
-        const storedApps = localStorage.getItem("careerforge_saved_applications");
-        if (storedApps) {
-          const parsed = JSON.parse(storedApps);
-          if (Array.isArray(parsed)) {
-            setApplicationsCount(parsed.length);
-            const appliedOnly = parsed.filter((a: any) => a.status === "applied").length;
-            setOutreachCount(appliedOnly || parsed.length);
-          }
-        }
-      } catch {
-        setApplicationsCount(0);
-      }
     }
 
     // Load any custom analyzed jobs from API
@@ -102,14 +71,16 @@ export default function DashboardOverviewPage() {
       try {
         const jobs = await jobApi.list();
         if (Array.isArray(jobs) && jobs.length > 0) {
-          setJobsCount(VERIFIED_JOB_DATABASE.length + jobs.length);
-          const first = jobs[0];
-          setTopJob({
-            title: first.title,
-            company: first.company,
-            location: first.location || "Remote",
-            matchScore: 96,
-          });
+          setJobsCount((prev) => prev + jobs.length);
+          if (!topJob) {
+            const first = jobs[0];
+            setTopJob({
+              title: first.title,
+              company: first.company,
+              location: first.location || "Remote",
+              matchScore: 0,
+            });
+          }
         }
       } catch (err) {}
     }
@@ -140,7 +111,6 @@ export default function DashboardOverviewPage() {
             jobsCount={jobsCount}
             matchesCount={matchesCount}
             outreachCount={outreachCount}
-            applicationsCount={applicationsCount}
             skillsCount={resumesCount > 0 ? 18 : 0}
           />
         </div>

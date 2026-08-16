@@ -9,7 +9,6 @@ Table relationships:
     Job → Requirements
     Resume × Job → MatchReport
     ResumeVersion → Resume/Job
-    Application → Job/ResumeVersion
     Contact → Job
     OutreachDraft → Job/Contact
     AuditLog → User (optional)
@@ -20,7 +19,6 @@ from app.models.resume import Resume, ResumeSection, EvidenceItem
 from app.models.job import Job, JobRequirement
 from app.models.match import MatchReport
 from app.models.resume_version import ResumeVersion
-from app.models.application import Application
 from app.models.contact import Contact
 from app.models.outreach import OutreachDraft
 from app.models.audit import AuditLog
@@ -34,7 +32,6 @@ __all__ = [
     "JobRequirement",
     "MatchReport",
     "ResumeVersion",
-    "Application",
     "Contact",
     "OutreachDraft",
     "AuditLog",

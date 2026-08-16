@@ -8,7 +8,6 @@ import {
   FileText,
   Search,
   Send,
-  ClipboardList,
   Bot,
   ChevronLeft,
 } from "lucide-react";
@@ -28,7 +27,6 @@ const SIDEBAR_ITEMS: NavItem[] = [
   { label: "Resume Studio", href: ROUTES.UPLOAD, icon: FileText },
   { label: "Job Matcher", href: ROUTES.JOBS, icon: Search },
   { label: "Cold Outreach AI", href: ROUTES.OUTREACH, icon: Send },
-  { label: "Application Tracker", href: ROUTES.APPLICATIONS, icon: ClipboardList },
   { label: "Executive AI Architect", href: ROUTES.ASSISTANT, icon: Bot, badge: "AI" },
 ];
 
