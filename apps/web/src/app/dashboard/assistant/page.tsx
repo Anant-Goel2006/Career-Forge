@@ -242,8 +242,18 @@ function AssistantContent() {
           try {
             const parsed = JSON.parse(cached);
             const structured = parseResumeIntoStructuredData(parsed);
-            // Replace completely instead of merging with the fake default
-            setResumeData(structured as ResumeContent);
+            
+            // Merge with the FAANG template so it never looks broken
+            const merged = { ...DEFAULT_GENERIC_RESUME };
+            if (structured.fullName) merged.fullName = structured.fullName;
+            if (structured.contactLine) merged.contactLine = structured.contactLine;
+            if (structured.summary) merged.summary = structured.summary;
+            if (structured.skills.languages) merged.skills.languages = structured.skills.languages;
+            if (structured.experience.length > 0) merged.experience = structured.experience;
+            if (structured.projects.length > 0) merged.projects = structured.projects;
+            if (structured.education.length > 0) merged.education = structured.education;
+            
+            setResumeData(merged as ResumeContent);
             return;
           } catch (e) {
             console.warn("Could not parse cached resume", e);

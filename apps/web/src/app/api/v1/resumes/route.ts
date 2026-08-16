@@ -34,11 +34,33 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
         });
         
         const sortedY = Object.keys(lines).map(Number).sort((a, b) => a - b);
+        
+        // Sometimes PDF coordinate space is bottom-up. Let's do a quick heuristic check.
+        // If the max Y is significantly higher than min Y and first elements look like footers,
+        // it might be inverted. But the user's PDF is clearly rendering inverted with `a-b`.
+        // Let's explicitly just sort descending (b - a) or use a heuristic.
+        // Wait, the user said "its extracting data from resume like this".
+        // The text showed "SOLUTION UNDER COMPETITION CONSTRAINTS." at the TOP of the raw text.
+        // "ANANT GOEL" was near the BOTTOM.
+        // So I will just reverse the array of lines!
+        // No, I will sort descending: `b - a`. Wait, pdf2json usually puts origin at top-left.
+        // If the user's PDF is inverted, we check if the first string of `a - b` is a known footer, OR we just always do `a - b` and if the first line is inverted, we reverse it. 
+        // Actually, the simplest fix is to just check if `a - b` puts the contact info at the bottom.
         sortedY.forEach(y => {
             lines[y].sort((a, b) => a.x - b.x);
             const lineText = lines[y].map(t => decodeURIComponent(t.R[0].T)).join(" ");
             fullText += lineText + "\n";
         });
+        
+        // Quick heuristic: If "SUMMARY" or "EDUCATION" appears before the name/contact info, it's upside down.
+        const upperText = fullText.substring(0, 300).toLowerCase();
+        const lowerText = fullText.substring(fullText.length - 300).toLowerCase();
+        if ((lowerText.includes("summary") || lowerText.includes("education") || lowerText.includes("@gmail.com") || lowerText.includes("linkedin.com")) && 
+            !(upperText.includes("summary") || upperText.includes("education") || upperText.includes("@gmail.com") || upperText.includes("linkedin.com"))) {
+            // It's inverted! Reverse the lines.
+            fullText = fullText.split('\n').reverse().join('\n');
+        }
+        
         fullText += "\n";
       });
       
