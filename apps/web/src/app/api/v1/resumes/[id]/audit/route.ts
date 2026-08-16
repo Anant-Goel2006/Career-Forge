@@ -8,10 +8,15 @@ export async function POST(
 ) {
   const { id } = await params;
 
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch (err) {}
+
   let audit = serverStore.audits.get(id);
 
-  if (!audit) {
-    const resume = serverStore.resumes.get(id);
+  if (!audit || body.resume) {
+    const resume = body.resume || serverStore.resumes.get(id);
     const text = resume?.raw_text || "Professional Software & Data Resume\nSkills: Python, SQL, React";
     const sections = resume?.sections || segmentResumeText(text);
 

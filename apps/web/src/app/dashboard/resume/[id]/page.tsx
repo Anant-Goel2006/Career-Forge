@@ -64,7 +64,7 @@ export default function ResumeDetailPage({
 
         // Auto-run or load initial audit
         try {
-          const auditResult = await resumeApi.audit(resumeId);
+          const auditResult = await resumeApi.audit(data);
           setAudit(auditResult);
           if (typeof window !== "undefined") {
             localStorage.setItem("careerforge_latest_score", auditResult.overall_score.toString());
@@ -84,10 +84,10 @@ export default function ResumeDetailPage({
   }, [resumeId]);
 
   const handleRunAudit = async () => {
-    if (!resumeId) return;
+    if (!resume || !resumeId) return;
     setAuditing(true);
     try {
-      const auditResult = await resumeApi.audit(resumeId);
+      const auditResult = await resumeApi.audit(resume);
       setAudit(auditResult);
       if (typeof window !== "undefined") {
         localStorage.setItem("careerforge_latest_score", auditResult.overall_score.toString());

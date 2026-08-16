@@ -413,12 +413,15 @@ export const resumeApi = {
     }
   },
 
-  audit: async (id: string): Promise<AuditResponse> => {
+  audit: async (resume: ResumeResponse): Promise<AuditResponse> => {
     try {
-      return await apiRequest<AuditResponse>(`/v1/resumes/${id}/audit`, { method: "POST" });
+      return await apiRequest<AuditResponse>(`/v1/resumes/${resume.id}/audit`, {
+        method: "POST",
+        body: JSON.stringify({ resume }),
+      });
     } catch (err) {
       return {
-        resume_id: id,
+        resume_id: resume.id,
         overall_score: 86,
         issues: [
           {

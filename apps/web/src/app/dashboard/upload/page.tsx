@@ -87,7 +87,7 @@ export default function UploadPage() {
 
       // Run automatic health audit
       try {
-        const audit = await resumeApi.audit(result.id);
+        const audit = await resumeApi.audit(result);
         setAuditScore(audit.overall_score);
         if (typeof window !== "undefined") {
           localStorage.setItem("careerforge_latest_score", audit.overall_score.toString());
