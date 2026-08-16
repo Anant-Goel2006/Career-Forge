@@ -277,6 +277,7 @@ export default function JobsPage() {
                   <h3 className="text-sm font-bold text-white">No Matching Roles Found</h3>
                   <p className="text-xs text-zinc-400 mt-1">Try adjusting your search criteria.</p>
                 </GlassCard>
+              ) : (
                 <motion.div 
                   initial="hidden"
                   animate="visible"
