@@ -12,15 +12,37 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PDFParser = require("pdf2json");
-    const pdfParser = new PDFParser(null, 1); // 1 = extract raw text
+    const pdfParser = new PDFParser(null, 1);
 
     pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
-    pdfParser.on("pdfParser_dataReady", () => {
-      let raw = pdfParser.getRawTextContent();
-      // Clean up pdf2json artifacts
-      raw = raw.replace(/----------------Page \(\d+\) Break----------------/g, "\n");
-      raw = raw.replace(/Page \d+ of \d+/g, "\n");
-      resolve(raw);
+    pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
+      let fullText = "";
+      if (!pdfData || !pdfData.formImage || !pdfData.formImage.Pages) {
+          let raw = pdfParser.getRawTextContent();
+          raw = raw.replace(/----------------Page \(\d+\) Break----------------/g, "\n");
+          raw = raw.replace(/Page \d+ of \d+/g, "\n");
+          resolve(raw);
+          return;
+      }
+      
+      pdfData.formImage.Pages.forEach((page: any) => {
+        const lines: Record<number, any[]> = {};
+        page.Texts.forEach((textObj: any) => {
+            const y = Math.round(textObj.y * 5) / 5; // Group closely aligned Y coordinates (0.2 increments)
+            if (!lines[y]) lines[y] = [];
+            lines[y].push(textObj);
+        });
+        
+        const sortedY = Object.keys(lines).map(Number).sort((a, b) => a - b);
+        sortedY.forEach(y => {
+            lines[y].sort((a, b) => a.x - b.x);
+            const lineText = lines[y].map(t => decodeURIComponent(t.R[0].T)).join(" ");
+            fullText += lineText + "\n";
+        });
+        fullText += "\n";
+      });
+      
+      resolve(fullText);
     });
 
     pdfParser.parseBuffer(buffer);
