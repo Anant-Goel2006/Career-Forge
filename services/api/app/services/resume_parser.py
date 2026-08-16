@@ -19,15 +19,27 @@ from app.services.ai_provider import AIProvider, get_ai_provider
 logger = logging.getLogger(__name__)
 
 
-class ParsedSection(BaseModel):
-    section_type: str = Field(
-        description="One of: summary, experience, education, skills, projects, certifications, awards, publications, contact, general"
-    )
-    raw_text: str = Field(description="The exact text content belonging to this section")
+class ExperienceEntry(BaseModel):
+    company: str | None = Field(description="Company or organization name")
+    role: str | None = Field(description="Job title or role")
+    start_date: str | None = Field(description="Start date (e.g. Jan 2020)")
+    end_date: str | None = Field(description="End date (e.g. Present, Dec 2023)")
+    description: str | None = Field(description="Raw text of the experience bullets")
 
+class EducationEntry(BaseModel):
+    institution: str | None = Field(description="University or school name")
+    degree: str | None = Field(description="Degree obtained (e.g. B.S. Computer Science)")
+    graduation_date: str | None = Field(description="Graduation date or year")
 
 class ParsedResumeData(BaseModel):
-    sections: list[ParsedSection]
+    contact: str | None = Field(description="Contact information block (name, email, phone, links)")
+    summary: str | None = Field(description="Professional summary or objective text")
+    skills: list[str] = Field(description="List of technical and soft skills")
+    experience: list[ExperienceEntry] = Field(description="List of work experience entries")
+    education: list[EducationEntry] = Field(description="List of education entries")
+    projects: list[str] = Field(description="List of project descriptions")
+    certifications: list[str] = Field(description="List of certifications or awards")
+    general: str | None = Field(description="Any remaining text that doesn't fit other categories")
 
 
 # Comprehensive Section Header Patterns
@@ -159,65 +171,59 @@ class ResumeParser:
             raise UnsupportedFileTypeError()
 
     async def _identify_sections(self, text: str) -> list[dict[str, Any]]:
-        """Identify resume sections from raw text."""
+        """Identify resume sections from raw text using Structured Outputs."""
         if self._ai.is_configured:
-            prompt = """You are an expert resume parser. Extract the resume into strict structured sections.
-Classify each section into one of: summary, experience, education, skills, projects, certifications, awards, contact, general.
+            prompt = """You are an expert resume parser. Extract the resume into strict structured fields.
+Do not invent or summarize any information. Extract the exact facts.
 
 FEW-SHOT EXAMPLES:
 
 Example 1 (Clean):
 Input:
-John Doe
-johndoe@email.com
+John Doe | johndoe@email.com
 Experience
-Software Engineer at TechCorp (2020-2023)
+Software Engineer at TechCorp (Jan 2020 - Present)
 - Built an API using Python
 
-Output:
-[
-  {"section_type": "contact", "raw_text": "John Doe\\njohndoe@email.com"},
-  {"section_type": "experience", "raw_text": "Software Engineer at TechCorp (2020-2023)\\n- Built an API using Python"}
-]
+Example Output should parse John Doe into contact, and TechCorp into experience.
 
 Example 2 (Messy/No Headers):
 Input:
 Jane Smith | 555-1234
 Java, C++, Spring Boot
-Worked at Initech as Developer
+Worked at Initech as Developer (2020-2022)
 Graduated MIT 2019
 
-Output:
-[
-  {"section_type": "contact", "raw_text": "Jane Smith | 555-1234"},
-  {"section_type": "skills", "raw_text": "Java, C++, Spring Boot"},
-  {"section_type": "experience", "raw_text": "Worked at Initech as Developer"},
-  {"section_type": "education", "raw_text": "Graduated MIT 2019"}
-]
-
-Example 3 (Complex Columns):
-Input:
-Skills         Experience
-Python         Data Analyst, Acme Corp
-SQL            - Analyzed data
-
-Output:
-[
-  {"section_type": "skills", "raw_text": "Python\\nSQL"},
-  {"section_type": "experience", "raw_text": "Data Analyst, Acme Corp\\n- Analyzed data"}
-]
-
-Now, parse the following resume text EXACTLY as it appears into the required schema:"""
+Example Output should parse Jane Smith into contact, Java/C++/Spring Boot into skills, Initech into experience, and MIT into education.
+"""
             try:
-                result = await self._ai.generate_structured(
+                parsed_data: ParsedResumeData = await self._ai.generate_structured(
                     prompt=prompt,
                     response_schema=ParsedResumeData,
                     context={"resume_text": text}
                 )
+                sections = []
+                if parsed_data.contact: sections.append({"section_type": "contact", "raw_text": parsed_data.contact})
+                if parsed_data.summary: sections.append({"section_type": "summary", "raw_text": parsed_data.summary})
+                if parsed_data.skills: sections.append({"section_type": "skills", "raw_text": ", ".join(parsed_data.skills)})
                 
+                for exp in parsed_data.experience:
+                    exp_text = f"{exp.role or ''} at {exp.company or ''} ({exp.start_date or ''} - {exp.end_date or ''})\n{exp.description or ''}"
+                    sections.append({"section_type": "experience", "raw_text": exp_text.strip()})
+                    
+                for edu in parsed_data.education:
+                    edu_text = f"{edu.degree or ''} from {edu.institution or ''} ({edu.graduation_date or ''})"
+                    sections.append({"section_type": "education", "raw_text": edu_text.strip()})
+                    
+                for proj in parsed_data.projects:
+                    sections.append({"section_type": "projects", "raw_text": proj})
+                    
+                if parsed_data.certifications: sections.append({"section_type": "certifications", "raw_text": ", ".join(parsed_data.certifications)})
+                if parsed_data.general: sections.append({"section_type": "general", "raw_text": parsed_data.general})
+
                 # Lightweight cross-check
                 has_email_regex = bool(re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text))
-                llm_text = " ".join(sec.raw_text for sec in result.sections).lower()
+                llm_text = " ".join(sec["raw_text"] for sec in sections).lower()
                 has_email_llm = bool(re.search(r"[\w\.-]+@[\w\.-]+\.\w+", llm_text))
                 
                 confidence = "high"
@@ -225,16 +231,12 @@ Now, parse the following resume text EXACTLY as it appears into the required sch
                     confidence = "low"
                     logger.warning("LLM extraction missed email detected by regex.")
                     
-                if result.sections:
-                    return [
-                        {
-                            "section_type": sec.section_type,
-                            "raw_text": sec.raw_text,
-                            "order_index": i,
-                            "confidence": confidence
-                        }
-                        for i, sec in enumerate(result.sections)
-                    ]
+                for i, sec in enumerate(sections):
+                    sec["order_index"] = i
+                    sec["confidence"] = confidence
+                
+                return sections
+
             except Exception as e:
                 logger.warning(f"AI section segmentation fallback: {e}")
 

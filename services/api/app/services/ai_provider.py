@@ -96,6 +96,7 @@ class AIProvider:
         context: dict[str, Any] | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
+        response_schema: Any = None,
     ) -> str:
         """
         Generate text using Gemini with CareerForge guardrails.
@@ -135,6 +136,8 @@ class AIProvider:
                     system_instruction=SYSTEM_PROMPT,
                     temperature=temperature or self._temperature,
                     max_output_tokens=max_tokens or self._max_tokens,
+                    response_mime_type="application/json" if response_schema else None,
+                    response_schema=response_schema,
                 ),
             )
 
@@ -190,25 +193,17 @@ class AIProvider:
             AIValidationError: If output doesn't match schema.
         """
         import json
-
         from app.core.exceptions import AIValidationError
 
-        schema_hint = f"\n\nRespond ONLY with valid JSON matching this structure:\n{response_schema.model_json_schema()}"
-        raw_text = await self.generate_text(
-            prompt=prompt + schema_hint,
-            context=context,
-            temperature=0.1,  # Low temperature for structured output
-        )
-
-        # Extract JSON from response (handle markdown code blocks)
-        json_text = raw_text.strip()
-        if json_text.startswith("```"):
-            # Remove markdown code block markers
-            lines = json_text.split("\n")
-            json_text = "\n".join(lines[1:-1]) if len(lines) > 2 else json_text
-
         try:
-            parsed_data = json.loads(json_text)
+            raw_text = await self.generate_text(
+                prompt=prompt,
+                context=context,
+                temperature=0.1,  # Low temperature for structured output
+                response_schema=response_schema,
+            )
+
+            parsed_data = json.loads(raw_text)
             return response_schema.model_validate(parsed_data)
         except (json.JSONDecodeError, Exception) as e:
             logger.warning("AI output validation failed: %s", str(e))

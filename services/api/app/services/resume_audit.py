@@ -67,18 +67,21 @@ class ResumeAuditService:
         raw_text: str,
     ) -> dict[str, Any]:
         """Perform a health audit on a parsed resume."""
+        # 1. Compute deterministic score first
+        deterministic_audit = self._basic_audit(sections, raw_text)
+        
         if not self._ai.is_configured:
-            return self._basic_audit(sections, raw_text)
+            return deterministic_audit
 
-        prompt = """Analyze this resume for quality issues. Check for:
-1. Grammar and wording problems
-2. Action verbs and passive voice
-3. Section hierarchy or missing standard sections
-4. Contact information completeness
-5. Quantifiable metrics and Google X-Y-Z formula
+        # 2. Use LLM only for explanation layer
+        prompt = f"""Analyze this resume for quality issues based on its deterministic health score of {deterministic_audit['overall_score']}/100.
+The computed strengths are: {', '.join(deterministic_audit['strengths'])}
+The identified issues are: {', '.join([i['message'] for i in deterministic_audit['issues']])}
 
-For each issue found, provide severity (critical/warning/info), category, a clear message, and an actionable suggestion.
-Also calculate an accurate, dynamic quality score (0-100), health summary, and list of identified strengths."""
+Explain this score in a professional summary. 
+Format the issues clearly with severity (critical/warning/info), category, a clear message, and an actionable suggestion.
+Do not change the overall_score; it must remain exactly {deterministic_audit['overall_score']}.
+Do not invent facts that contradict the deterministic issues."""
 
         try:
             result = await self._ai.generate_structured(
@@ -86,10 +89,14 @@ Also calculate an accurate, dynamic quality score (0-100), health summary, and l
                 response_schema=AuditResultSchema,
                 context={"resume_text": raw_text},
             )
-            return result.model_dump()
+            
+            # Ensure the deterministic score overrides whatever the LLM might output
+            final_result = result.model_dump()
+            final_result["overall_score"] = deterministic_audit["overall_score"]
+            return final_result
         except Exception as e:
-            logger.warning("AI audit fallback: %s", str(e))
-            return self._basic_audit(sections, raw_text)
+            logger.warning("AI audit explanation fallback: %s", str(e))
+            return deterministic_audit
 
     def _basic_audit(
         self,
