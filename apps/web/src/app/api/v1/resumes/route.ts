@@ -53,10 +53,15 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
         });
         
         // Quick heuristic: If "SUMMARY" or "EDUCATION" appears before the name/contact info, it's upside down.
-        const upperText = fullText.substring(0, 300).toLowerCase();
-        const lowerText = fullText.substring(fullText.length - 300).toLowerCase();
-        if ((lowerText.includes("summary") || lowerText.includes("education") || lowerText.includes("@gmail.com") || lowerText.includes("linkedin.com")) && 
-            !(upperText.includes("summary") || upperText.includes("education") || upperText.includes("@gmail.com") || upperText.includes("linkedin.com"))) {
+        const trimmedText = fullText.trim();
+        const upperText = trimmedText.substring(0, 400).toLowerCase();
+        const lowerText = trimmedText.substring(trimmedText.length - 400).toLowerCase();
+        
+        // If contact info or 'summary' is found at the bottom but not top, reverse it.
+        const hasBottomContact = lowerText.includes("summary") || lowerText.includes("education") || lowerText.includes("@gmail.com") || lowerText.includes("linkedin.com") || lowerText.includes("@");
+        const hasTopContact = upperText.includes("summary") || upperText.includes("education") || upperText.includes("@gmail.com") || upperText.includes("linkedin.com") || upperText.includes("@");
+        
+        if (hasBottomContact && !hasTopContact) {
             // It's inverted! Reverse the lines.
             fullText = fullText.split('\n').reverse().join('\n');
         }
