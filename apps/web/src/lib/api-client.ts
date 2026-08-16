@@ -7,13 +7,8 @@
 
 import { matchesSkill } from "@/lib/utils";
 
-/** Base API configuration */
-const API_BASE_URL =
-  typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_BASE_URL && !process.env.NEXT_PUBLIC_API_BASE_URL.includes("localhost:8000")
-        ? process.env.NEXT_PUBLIC_API_BASE_URL
-        : "/api")
-    : (process.env.NEXT_PUBLIC_API_BASE_URL || "/api");
+/** Base API configuration — always routes to Next.js API routes */
+const API_BASE_URL = "/api";
 
 /** Structured API error */
 export class ApiError extends Error {
@@ -255,12 +250,16 @@ export interface ApplicationResponse {
 // ============================================================
 
 async function extractTextFromFileClient(file: File): Promise<string> {
+  // Do not attempt to read binary files as text on the client
+  if (file.name.toLowerCase().endsWith('.pdf') || file.name.toLowerCase().endsWith('.docx')) {
+    return `[Backend Connection Failed]\nCould not reach the FastAPI backend to parse ${file.name}.\n\nPlease ensure your Python backend is running on port 8000 and you have restarted your Next.js dev server to apply the proxy config.`;
+  }
+
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result;
       if (typeof content === "string") {
-        // Strip non-printable / binary chars
         const clean = content.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s{2,}/g, " ").trim();
         resolve(clean || `Resume content extracted from ${file.name}`);
       } else {
@@ -360,87 +359,54 @@ export const authApi = {
 };
 
 // ============================================================
-// Resume API (With Resilient Smart Fallback)
+// Resume API — NO fake fallbacks. Real errors propagate.
 // ============================================================
 
 export const resumeApi = {
   upload: async (file: File): Promise<ResumeResponse> => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await apiRequest<ResumeResponse>("/v1/resumes", {
-        method: "POST",
-        body: formData,
-      });
+    const formData = new FormData();
+    formData.append("file", file);
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("careerforge_parsed_resume", JSON.stringify(res));
-      }
-      return res;
-    } catch (err) {
-      console.warn("API route upload failed, engaging resilient client-side extraction:", err);
-      const text = await extractTextFromFileClient(file);
-      const parsed = parseClientResumeSections(text, file.name);
+    // This calls the Next.js API route which does REAL pdf-parse / mammoth extraction
+    const res = await apiRequest<ResumeResponse>("/v1/resumes", {
+      method: "POST",
+      body: formData,
+    });
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("careerforge_parsed_resume", JSON.stringify(parsed));
-      }
-      return parsed;
+    // Cache the REAL parsed result
+    if (typeof window !== "undefined") {
+      localStorage.setItem("careerforge_parsed_resume", JSON.stringify(res));
+      localStorage.setItem("careerforge_latest_resume_id", res.id);
     }
+    return res;
   },
 
   get: async (id: string): Promise<ResumeResponse> => {
+    // In serverless mode, we use localStorage as persistence
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("careerforge_parsed_resume");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.id === id || id === "latest") return parsed;
+        } catch {}
+      }
+    }
+
+    // If no cache, try the API
     try {
       return await apiRequest<ResumeResponse>(`/v1/resumes/${id}`);
-    } catch (err) {
-      if (typeof window !== "undefined") {
-        const cached = localStorage.getItem("careerforge_parsed_resume");
-        if (cached) {
-          try {
-            return JSON.parse(cached);
-          } catch {}
-        }
-      }
-      return {
-        id,
-        original_filename: "Uploaded_Resume.pdf",
-        source_type: "PDF",
-        status: "parsed",
-        sections: [],
-        evidence_items: [],
-        created_at: new Date().toISOString(),
-      };
+    } catch {
+      throw new ApiError("No resume found. Please upload a resume first.", "NOT_FOUND", 404);
     }
   },
 
   audit: async (resume: ResumeResponse): Promise<AuditResponse> => {
-    try {
-      return await apiRequest<AuditResponse>(`/v1/resumes/${resume.id}/audit`, {
-        method: "POST",
-        body: JSON.stringify({ resume }),
-      });
-    } catch (err) {
-      return {
-        resume_id: resume.id,
-        overall_score: 86,
-        issues: [
-          {
-            severity: "critical",
-            category: "Impact",
-            message: "Quantify accomplishment metrics in bullet points",
-            suggestion: "Upgrade bullets using Google X-Y-Z formula: 'Accomplished [X] as measured by [Y], by doing [Z]'.",
-            section: "experience",
-            line_reference: null,
-          },
-        ],
-        summary: "Resume parsed successfully with an overall evidence readiness score of 86/100.",
-        strengths: [
-          "Categorized technical skills section",
-          "Structured professional experience",
-          "Clear executive summary",
-        ],
-      };
-    }
+    // Calls the real deterministic scoring API route
+    return await apiRequest<AuditResponse>(`/v1/resumes/${resume.id}/audit`, {
+      method: "POST",
+      body: JSON.stringify({ resume }),
+    });
   },
 };
 
@@ -459,12 +425,12 @@ export const jobApi = {
       return {
         id: `job-client-${Date.now()}`,
         source: "client_analyzer",
-        company: data.company || "Target Company",
-        title: data.title || "Target Role",
+        company: "[Backend Offline]",
+        title: data.title || "Connection to FastAPI failed",
         location: data.location || "Remote",
         employment_type: data.employment_type || "Full-time",
         experience_level: "Entry / Mid",
-        description: data.description,
+        description: data.description || "The FastAPI backend is not running or unreachable. Please verify your NEXT_PUBLIC_API_BASE_URL or run the backend locally on port 8000.",
         application_url: data.application_url || null,
         requirements: [
           {

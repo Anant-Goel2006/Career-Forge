@@ -261,6 +261,7 @@ export default function JobsPage() {
 
   // User Skills from parsed resume for dynamic match score
   const [userSkills, setUserSkills] = useState<string[]>([]);
+  const [hasResume, setHasResume] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -268,10 +269,26 @@ export default function JobsPage() {
         const cached = localStorage.getItem("careerforge_parsed_resume");
         if (cached) {
           const parsed = JSON.parse(cached);
-          const skillSec = parsed.sections?.find((s: any) => s.section_type === "skills");
-          if (skillSec?.raw_text) {
-            const rawSkills = skillSec.raw_text.toLowerCase().split(/[,\n•]+/).map((s: string) => s.trim()).filter(Boolean);
-            setUserSkills(rawSkills);
+          if (parsed.sections && parsed.sections.length > 0) {
+            setHasResume(true);
+
+            // Extract skills from ALL sections, not just the skills section
+            const allText = parsed.sections.map((s: any) => s.raw_text || "").join("\n").toLowerCase();
+
+            // Match against known tech keywords
+            const techKeywords = [
+              "python", "sql", "javascript", "typescript", "react", "next.js", "node.js",
+              "java", "c++", "go", "docker", "kubernetes", "aws", "azure", "gcp",
+              "pandas", "numpy", "power bi", "excel", "git", "postgresql", "mongodb",
+              "redis", "fastapi", "django", "flask", "tailwindcss", "html", "css",
+              "rust", "kotlin", "swift", "ruby", "php", "scala", "r", "matlab",
+              "tensorflow", "pytorch", "scikit-learn", "spark", "hadoop", "linux",
+              "ci/cd", "graphql", "rest", "api", "agile", "scrum", "figma",
+              "tableau", "machine learning", "deep learning", "nlp", "data science",
+            ];
+
+            const foundSkills = techKeywords.filter((k) => allText.includes(k));
+            setUserSkills(foundSkills);
           }
         }
       } catch {}
@@ -316,18 +333,28 @@ export default function JobsPage() {
     setSelectedCity("All Cities");
   };
 
-  // Filtered Opportunities with dynamic scores
+  // Filtered Opportunities with dynamic scores based on REAL resume skills
   const filteredJobs = useMemo(() => {
     return VERIFIED_JOB_DATABASE.map((job) => {
-      let dynamicScore = job.matchScore;
-      if (userSkills.length > 0) {
+      let dynamicScore: number;
+
+      if (userSkills.length === 0) {
+        // No resume uploaded — show a low baseline score
+        dynamicScore = 0;
+      } else {
+        // Calculate real skill overlap
         const matches = job.skills.filter((s) =>
           userSkills.some((us) => us.includes(s.toLowerCase()) || s.toLowerCase().includes(us))
         ).length;
-        dynamicScore = Math.min(99, Math.max(82, 82 + Math.round((matches / Math.max(job.skills.length, 1)) * 16)));
+        const coverage = matches / Math.max(job.skills.length, 1);
+
+        // Score range: 30 (no overlap) to 99 (full overlap)
+        dynamicScore = Math.min(99, Math.max(30, Math.round(30 + coverage * 69)));
       }
+
       return { ...job, matchScore: dynamicScore };
-    }).filter((job) => {
+    }).sort((a, b) => b.matchScore - a.matchScore) // Sort by best match first
+    .filter((job) => {
       const matchSearch =
         searchQuery === "" ||
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -503,7 +530,9 @@ export default function JobsPage() {
             High-Match <span className="cf-text-gradient">Opportunities & Intelligence</span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400">
-            Matched directly to your verified skills across startups, boutique analytics firms, scaleups, and tech giants.
+            {hasResume
+              ? `Matched to ${userSkills.length} skills extracted from your resume.`
+              : "Upload your resume first to see personalized match scores."}
           </p>
         </div>
 

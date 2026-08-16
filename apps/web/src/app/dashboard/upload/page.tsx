@@ -92,8 +92,10 @@ export default function UploadPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("careerforge_latest_score", audit.overall_score.toString());
         }
-      } catch {
-        setAuditScore(84);
+      } catch (auditErr: unknown) {
+        console.warn("Audit failed:", auditErr);
+        // Don't set a fake score — leave it null so the UI knows audit failed
+        setAuditScore(null);
       }
 
       setProgress(100);
