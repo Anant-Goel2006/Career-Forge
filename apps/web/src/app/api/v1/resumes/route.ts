@@ -16,7 +16,11 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
 
     pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
     pdfParser.on("pdfParser_dataReady", () => {
-      resolve(pdfParser.getRawTextContent());
+      let raw = pdfParser.getRawTextContent();
+      // Clean up pdf2json artifacts
+      raw = raw.replace(/----------------Page \(\d+\) Break----------------/g, "\n");
+      raw = raw.replace(/Page \d+ of \d+/g, "\n");
+      resolve(raw);
     });
 
     pdfParser.parseBuffer(buffer);

@@ -120,8 +120,23 @@ const DEFAULT_GENERIC_RESUME: ResumeContent = {
   ],
 };
 
-function parseResumeIntoStructuredData(data: any): Partial<ResumeContent> {
-  const result: Partial<ResumeContent> = {};
+function parseResumeIntoStructuredData(data: any): ResumeContent {
+  const result: ResumeContent = {
+    fullName: "",
+    contactLine: "",
+    summary: "",
+    skills: {
+      languages: "",
+      frameworks: "",
+      cloudDevops: "",
+      databases: "",
+    },
+    experience: [],
+    projects: [],
+    certifications: [],
+    achievements: [],
+    education: [],
+  };
   if (!data || !data.sections) return result;
 
   const contactSec = data.sections.find((s: any) => s.section_type === "contact");
@@ -146,9 +161,9 @@ function parseResumeIntoStructuredData(data: any): Partial<ResumeContent> {
   if (skillSec?.raw_text) {
     result.skills = {
       languages: skillSec.raw_text.replace(/\n+/g, ", ").trim(),
-      frameworks: "React, Next.js, FastAPI, Pandas, NumPy, Node.js",
-      cloudDevops: "AWS, Docker, Git, CI/CD, Power BI",
-      databases: "PostgreSQL, MySQL, Redis, MongoDB",
+      frameworks: "",
+      cloudDevops: "",
+      databases: "",
     };
   }
 
@@ -157,14 +172,11 @@ function parseResumeIntoStructuredData(data: any): Partial<ResumeContent> {
     const bullets = expLines.filter((l: string) => /^[-•*]|\b(improved|increased|reduced|built|developed|engineered|led|designed|analyzed|managed)\b/i.test(l));
     result.experience = [
       {
-        title: expLines[0]?.slice(0, 50) || "Software & Analytics Professional",
-        company: expLines[1]?.slice(0, 40) || "Technology Solutions",
-        location: "Hybrid / Remote",
-        dates: "2024 – Present",
-        bullets: bullets.length > 0 ? bullets.slice(0, 5).map((b: string) => b.replace(/^[-•*]\s*/, "")) : [
-          "Engineered scalable solutions and automated data workflows, improving processing turnaround by 35%.",
-          "Collaborated with cross-functional teams to design, implement, and deploy production-ready features.",
-        ],
+        title: expLines[0]?.slice(0, 50) || "",
+        company: expLines[1]?.slice(0, 40) || "",
+        location: "",
+        dates: "",
+        bullets: bullets.length > 0 ? bullets.slice(0, 5).map((b: string) => b.replace(/^[-•*]\s*/, "")) : [],
       },
     ];
   }
@@ -173,11 +185,11 @@ function parseResumeIntoStructuredData(data: any): Partial<ResumeContent> {
     const projLines = projSec.raw_text.split("\n").map((l: string) => l.trim()).filter(Boolean);
     result.projects = [
       {
-        name: projLines[0]?.slice(0, 50) || "Production Analytics & Cloud Platform",
-        tech: "Python, SQL, React, Docker, Cloud Services",
+        name: projLines[0]?.slice(0, 50) || "",
+        tech: "",
         bullets: projLines.slice(1, 4).map((l: string) => l.replace(/^[-•*]\s*/, "")).filter(Boolean).length > 0
           ? projLines.slice(1, 4).map((l: string) => l.replace(/^[-•*]\s*/, ""))
-          : ["Designed and deployed scalable architectures with comprehensive test coverage and automated CI/CD."],
+          : [],
       },
     ];
   }
@@ -186,10 +198,10 @@ function parseResumeIntoStructuredData(data: any): Partial<ResumeContent> {
     const eduLines = eduSec.raw_text.split("\n").map((l: string) => l.trim()).filter(Boolean);
     result.education = [
       {
-        degree: eduLines[0]?.slice(0, 60) || "Bachelor of Science in Engineering / Computer Science",
-        school: eduLines[1]?.slice(0, 60) || "University",
-        dates: "2020 – 2024",
-        location: "Academic Institution",
+        degree: eduLines[0]?.slice(0, 60) || "",
+        school: eduLines[1]?.slice(0, 60) || "",
+        dates: "",
+        location: "",
       },
     ];
   }
@@ -229,10 +241,8 @@ function AssistantContent() {
           try {
             const parsed = JSON.parse(cached);
             const structured = parseResumeIntoStructuredData(parsed);
-            setResumeData((prev) => ({
-              ...prev,
-              ...structured,
-            }));
+            // Replace completely instead of merging with the fake default
+            setResumeData(structured as ResumeContent);
             return;
           } catch (e) {
             console.warn("Could not parse cached resume", e);
@@ -244,12 +254,9 @@ function AssistantContent() {
           try {
             const data = await resumeApi.get(latestId);
             const structured = parseResumeIntoStructuredData(data);
-            setResumeData((prev) => ({
-              ...prev,
-              ...structured,
-            }));
+            setResumeData(structured as ResumeContent);
           } catch (e) {
-            console.log("Using default resume template data.");
+            console.warn("Failed to load latest resume:", e);
           }
         }
       }
