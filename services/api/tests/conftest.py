@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.core.database import Base, get_db
-from app.core.config import settings
+from app.core.config import get_settings
+settings = get_settings()
 
 # Test database URL (must be set in environment or default to local)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

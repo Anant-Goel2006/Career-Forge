@@ -76,9 +76,28 @@ class TailorService:
         if not self._ai.is_configured:
             # Fallback if no AI
             return {
-                "header": {"name": "Candidate", "title": job_title},
+                "fullName": "Candidate Name",
+                "contactLine": "contact@example.com | 555-0100",
                 "summary": "Experienced professional seeking a role.",
-                "sections": [{"title": "Experience", "content": ["Extracted from base resume"]}]
+                "skills": {
+                    "languages": "Extracted from base resume",
+                    "frameworks": "",
+                    "cloudDevops": "",
+                    "databases": ""
+                },
+                "experience": [
+                    {
+                        "title": job_title,
+                        "company": company,
+                        "location": "Remote",
+                        "dates": "Present",
+                        "bullets": ["Extracted from base resume"]
+                    }
+                ],
+                "projects": [],
+                "certifications": [],
+                "achievements": [],
+                "education": []
             }
 
         # Step 1: Job Analysis

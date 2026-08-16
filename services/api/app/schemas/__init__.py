@@ -35,11 +35,6 @@ from app.schemas.resume_version import (
     ResumeVersionResponse,
     RenderRequest,
 )
-from app.schemas.application import (
-    ApplicationResponse,
-    ApplicationCreateRequest,
-    ApplicationUpdateRequest,
-)
 
 __all__ = [
     "ErrorResponse", "HealthResponse", "PaginatedResponse", "PaginationParams",
@@ -49,5 +44,4 @@ __all__ = [
     "JobAnalyzeRequest", "JobResponse", "JobRequirementResponse",
     "MatchCreateRequest", "MatchReportResponse", "MatchScores", "SkillGap",
     "ResumeVersionCreateRequest", "ResumeVersionResponse", "RenderRequest",
-    "ApplicationResponse", "ApplicationCreateRequest", "ApplicationUpdateRequest",
 ]
