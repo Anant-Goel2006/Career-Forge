@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 // @ts-ignore
 import PDFParser from "pdf2json";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     if (file.name.toLowerCase().endsWith(".pdf")) {
-      return new Promise((resolve) => {
+      return new Promise<NextResponse>((resolve) => {
         const pdfParser = new PDFParser(null, true);
         
         pdfParser.on("pdfParser_dataError", (errData: any) => {
