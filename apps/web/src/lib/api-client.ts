@@ -250,9 +250,22 @@ export interface ApplicationResponse {
 // ============================================================
 
 async function extractTextFromFileClient(file: File): Promise<string> {
-  // Do not attempt to read binary files as text on the client
-  if (file.name.toLowerCase().endsWith('.pdf') || file.name.toLowerCase().endsWith('.docx')) {
-    return `[Backend Connection Failed]\nCould not reach the FastAPI backend to parse ${file.name}.\n\nPlease ensure your Python backend is running on port 8000 and you have restarted your Next.js dev server to apply the proxy config.`;
+  if (file.name.toLowerCase().endsWith('.pdf')) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/local-parse", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.text || "No text extracted from PDF.";
+      }
+    } catch (e) {
+      console.warn("Local PDF parse failed", e);
+    }
+    return `[PDF Parsing Failed]\nCould not extract text from ${file.name}.`;
   }
 
   return new Promise((resolve) => {
@@ -285,7 +298,7 @@ function parseClientResumeSections(text: string, filename: string): ResumeRespon
   sections.push({
     id: "sec-1",
     section_type: "contact",
-    raw_text: lines.slice(0, 3).join("\n") || "Candidate Contact Details",
+    raw_text: lines.slice(0, 3).join("\n"),
     normalized_text: lines.slice(0, 3).join(" "),
     order_index: 0,
   });
@@ -293,7 +306,7 @@ function parseClientResumeSections(text: string, filename: string): ResumeRespon
   sections.push({
     id: "sec-2",
     section_type: "summary",
-    raw_text: lines.slice(3, 7).join("\n") || "Experienced professional with hands-on expertise building scalable solutions.",
+    raw_text: lines.slice(3, 7).join("\n"),
     normalized_text: lines.slice(3, 7).join(" "),
     order_index: 1,
   });
@@ -301,7 +314,7 @@ function parseClientResumeSections(text: string, filename: string): ResumeRespon
   sections.push({
     id: "sec-3",
     section_type: "skills",
-    raw_text: foundSkills.length > 0 ? foundSkills.join(", ") : "Python, SQL, Modern Development Tools, Git",
+    raw_text: foundSkills.length > 0 ? foundSkills.join(", ") : lines.slice(7, 10).join(", "),
     normalized_text: foundSkills.join(", "),
     order_index: 2,
   });
@@ -309,8 +322,8 @@ function parseClientResumeSections(text: string, filename: string): ResumeRespon
   sections.push({
     id: "sec-4",
     section_type: "experience",
-    raw_text: lines.slice(7, 25).join("\n") || "Engineered scalable workflows and accelerated reporting turnaround by 35%.",
-    normalized_text: lines.slice(7, 25).join(" "),
+    raw_text: lines.slice(10).join("\n"),
+    normalized_text: lines.slice(10).join(" "),
     order_index: 3,
   });
 
@@ -755,7 +768,10 @@ async function getFallbackJobs(keywords: string, location: string, resumeId?: st
   })
   .filter(j => {
       if (location && location !== "All Cities" && location !== "All") {
-          if (!j.location.toLowerCase().includes(location.toLowerCase()) && !location.toLowerCase().includes(j.location.toLowerCase())) {
+          const locLower = location.toLowerCase();
+          const jLocLower = j.location.toLowerCase();
+          const jCountryLower = (j.country || "").toLowerCase();
+          if (!jLocLower.includes(locLower) && !locLower.includes(jLocLower) && !jCountryLower.includes(locLower)) {
               return false;
           }
       }
