@@ -367,18 +367,28 @@ export const resumeApi = {
     const formData = new FormData();
     formData.append("file", file);
 
-    // This calls the Next.js API route which does REAL pdf-parse / mammoth extraction
-    const res = await apiRequest<ResumeResponse>("/v1/resumes", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const res = await apiRequest<ResumeResponse>("/v1/resumes", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Cache the REAL parsed result
-    if (typeof window !== "undefined") {
-      localStorage.setItem("careerforge_parsed_resume", JSON.stringify(res));
-      localStorage.setItem("careerforge_latest_resume_id", res.id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("careerforge_parsed_resume", JSON.stringify(res));
+        localStorage.setItem("careerforge_latest_resume_id", res.id);
+      }
+      return res;
+    } catch (err) {
+      console.warn("Backend upload failed on Vercel/Local, using client-side fallback", err);
+      const text = await extractTextFromFileClient(file);
+      const fallbackRes = parseClientResumeSections(text, file.name);
+      
+      if (typeof window !== "undefined") {
+        localStorage.setItem("careerforge_parsed_resume", JSON.stringify(fallbackRes));
+        localStorage.setItem("careerforge_latest_resume_id", fallbackRes.id);
+      }
+      return fallbackRes;
     }
-    return res;
   },
 
   get: async (id: string): Promise<ResumeResponse> => {
@@ -630,16 +640,16 @@ export const assistantApi = {
 
 async function getFallbackJobs(keywords: string, location: string, resumeId?: string): Promise<any[]> {
   const defaultJobs = [
-    { company: "Supabase", tier: "Early Startup & SME", title: "Full Stack & Analytics Engineer", loc: "Remote", skills: ["PostgreSQL", "TypeScript", "React", "Next.js", "Python", "SQL"] },
+    { company: "Supabase", tier: "Early Startup & SME", title: "Full Stack & Analytics Engineer", loc: "Remote India", skills: ["PostgreSQL", "TypeScript", "React", "Next.js", "Python", "SQL"] },
     { company: "Fractal Analytics", tier: "Boutique Analytics", title: "Analytics Consultant", loc: "Gurgaon", skills: ["Python", "SQL", "Microsoft Power BI", "Pandas", "EDA"] },
     { company: "Microsoft", tier: "Tier 1 Tech Giant", title: "Data & AI Solutions Associate", loc: "Bangalore", skills: ["Power BI", "SQL", "Python", "Azure", "Machine Learning"] },
-    { company: "Google", tier: "Tier 1 Tech Giant", title: "Software Engineer", loc: "San Francisco", skills: ["Go", "C++", "Python", "Distributed Systems"] },
-    { company: "Netflix", tier: "Tier 1 Tech Giant", title: "Data Engineer (Intern)", loc: "Remote", skills: ["Python", "SQL", "Spark", "AWS"] },
-    { company: "Amazon", tier: "Tier 1 Tech Giant", title: "SDE I", loc: "Seattle", skills: ["Java", "Python", "AWS", "System Design"] },
-    { company: "Meta", tier: "Tier 1 Tech Giant", title: "Data Scientist", loc: "London", skills: ["Python", "SQL", "A/B Testing", "Statistics"] },
-    { company: "Apple", tier: "Tier 1 Tech Giant", title: "Machine Learning Engineer", loc: "Cupertino", skills: ["Python", "PyTorch", "TensorFlow", "C++"] },
-    { company: "Databricks", tier: "Mid-Market Unicorn", title: "Solutions Architect", loc: "Remote", skills: ["Python", "Spark", "SQL", "AWS"] },
-    { company: "Stripe", tier: "Mid-Market Unicorn", title: "Software Engineer", loc: "Remote", skills: ["TypeScript", "Ruby", "React"] }
+    { company: "Google", tier: "Tier 1 Tech Giant", title: "Software Engineer", loc: "Hyderabad", skills: ["Go", "C++", "Python", "Distributed Systems"] },
+    { company: "Netflix", tier: "Tier 1 Tech Giant", title: "Data Engineer (Intern)", loc: "Remote India", skills: ["Python", "SQL", "Spark", "AWS"] },
+    { company: "Amazon", tier: "Tier 1 Tech Giant", title: "SDE I", loc: "Bangalore", skills: ["Java", "Python", "AWS", "System Design"] },
+    { company: "Meta", tier: "Tier 1 Tech Giant", title: "Data Scientist", loc: "Gurgaon", skills: ["Python", "SQL", "A/B Testing", "Statistics"] },
+    { company: "Apple", tier: "Tier 1 Tech Giant", title: "Machine Learning Engineer", loc: "Hyderabad", skills: ["Python", "PyTorch", "TensorFlow", "C++"] },
+    { company: "Databricks", tier: "Mid-Market Unicorn", title: "Solutions Architect", loc: "Remote India", skills: ["Python", "Spark", "SQL", "AWS"] },
+    { company: "Stripe", tier: "Mid-Market Unicorn", title: "Software Engineer", loc: "Remote India", skills: ["TypeScript", "Ruby", "React"] }
   ];
 
   let fetchedJobs: any[] = [];

@@ -86,14 +86,9 @@ export default function OutreachPage() {
   const fetchDynamicData = async (jId: string, rId: string, compName: string | null) => {
     setLoadingData(true);
     try {
-      // 1. Recruiter Lookup
-      const recs = await jobApi.findRecruiter(jId);
-      if (recs && recs.length > 0) {
-        setRecruiters(recs);
-        setRecipientName(recs[0].name);
-        // We guess the email if it's not provided by the public endpoint
-        setRecipientEmail(`${recs[0].name.toLowerCase().split(' ')[0]}@${(compName || "").toLowerCase().replace(/\\s/g, '')}.com`);
-      }
+      // 1. Recruiter Lookup (Removed per user request)
+      setRecipientName("Hiring Manager");
+      setRecipientEmail(`careers@${(compName || "company").toLowerCase().replace(/\s/g, '')}.com`);
       
       // 2. Boost Suggestions
       const boost = await jobApi.getBoostSuggestions(jId, rId);
@@ -194,39 +189,23 @@ export default function OutreachPage() {
             </div>
 
             <div className="space-y-1.5 pt-1">
-              <label className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
-                {recruiters.length > 0 ? "Public Recruiters Found" : "No public recruiters found (Enter Manually)"}
-                {recruiters.length > 0 && <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px]">{recruiters.length}</span>}
-              </label>
-              {recruiters.length > 0 ? (
-                <select
-                  value={selectedRecruiterIdx}
-                  onChange={handleRecruiterChange}
-                  className="w-full rounded-xl border border-white/[0.09] bg-white/[0.03] px-3.5 py-2.5 text-xs text-white backdrop-blur-xl focus:border-purple-500/50 focus:outline-none"
-                >
-                  {recruiters.map((r, i) => (
-                    <option key={i} value={i} className="bg-[#06060a]">
-                      {r.name} - {r.role}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder="e.g. Sarah Vance"
-                  className="w-full rounded-xl border border-white/[0.09] bg-white/[0.03] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-purple-500/50 focus:outline-none"
-                />
-              )}
+               <label className="text-xs font-semibold text-zinc-300">Contact Name</label>
+               <input
+                 type="text"
+                 value={recipientName}
+                 onChange={(e) => setRecipientName(e.target.value)}
+                 placeholder="e.g. Hiring Manager"
+                 className="w-full rounded-xl border border-white/[0.09] bg-white/[0.03] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-purple-500/50 focus:outline-none"
+               />
             </div>
 
             <div className="space-y-1.5 pt-1">
-               <label className="text-xs font-semibold text-zinc-300">Recruiter Email (Guessed)</label>
+               <label className="text-xs font-semibold text-zinc-300">Contact Email</label>
                <input
                  type="email"
                  value={recipientEmail}
                  onChange={(e) => setRecipientEmail(e.target.value)}
+                 placeholder="e.g. careers@company.com"
                  className="w-full rounded-xl border border-white/[0.09] bg-white/[0.03] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-purple-500/50 focus:outline-none"
                />
             </div>

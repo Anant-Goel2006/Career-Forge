@@ -32,7 +32,7 @@ export default function JobsPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [location, setLocationFilter] = useState("");
+  const [location, setLocationFilter] = useState("India");
   const [remoteOnly, setRemoteOnly] = useState(false);
 
   // Data states
@@ -267,7 +267,7 @@ export default function JobsPage() {
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                       <input
                         type="text"
-                        placeholder="Location (e.g., Remote, NY)"
+                        placeholder="Location (e.g., Remote India, Bangalore)"
                         value={location}
                         onChange={(e) => setLocationFilter(e.target.value)}
                         className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
@@ -402,13 +402,6 @@ export default function JobsPage() {
                           >
                             <span className="truncate">{job.is_fallback_url ? `View ${job.company} Careers` : "Apply Now"}</span>
                             <ExternalLink className="h-4 w-4 shrink-0" />
-                          </button>
-
-                          <button
-                            onClick={() => setPermissionModalJob({ job, actionType: "outreach" })}
-                            className="cf-button-secondary flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-zinc-300 hover:text-white border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] transition-all"
-                          >
-                            <span>Find Recruiter & DM</span>
                           </button>
                         </div>
                       </GlassCard>

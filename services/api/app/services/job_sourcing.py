@@ -204,8 +204,8 @@ async def _fetch_adzuna(params: JobSearchParams, app_id: str, app_key: str) -> l
     """Fetch jobs from Adzuna API (requires free API key)."""
     jobs: list[JobListing] = []
     try:
-        # Default to US market, can be parameterized
-        country = "us"
+        # Default to India market
+        country = "in"
         url = f"https://api.adzuna.com/v1/api/jobs/{country}/search/1"
         query_params = {
             "app_id": app_id,
