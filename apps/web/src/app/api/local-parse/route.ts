@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (file.name.toLowerCase().endsWith(".pdf")) {
       return new Promise((resolve) => {
-        const pdfParser = new PDFParser(null, 1);
+        const pdfParser = new PDFParser(null, true);
         
         pdfParser.on("pdfParser_dataError", (errData: any) => {
           resolve(NextResponse.json({ error: errData.parserError }, { status: 500 }));
