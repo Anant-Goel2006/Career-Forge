@@ -739,6 +739,7 @@ async function getFallbackJobs(keywords: string, location: string, resumeId?: st
       skills: j.skills || ["Communication", "Problem Solving"],
       applyUrl: applyUrl,
       apply_url: applyUrl,
+      is_fallback_url: !j.applyUrl,
       posted_date: new Date().toISOString()
     };
   })

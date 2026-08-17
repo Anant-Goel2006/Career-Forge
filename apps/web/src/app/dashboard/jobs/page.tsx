@@ -176,12 +176,16 @@ export default function JobsPage() {
               </div>
               
               <h3 className="mb-2 text-xl font-bold text-white">
-                {permissionModalJob.actionType === "direct" ? "Apply to Role" : "Generate Outreach"}
+                {permissionModalJob.actionType === "direct" 
+                  ? (permissionModalJob.job.is_fallback_url ? `View ${permissionModalJob.job.company} Careers` : "Apply to Role")
+                  : "Generate Outreach"}
               </h3>
               
               <p className="mb-6 text-sm text-zinc-400">
                 {permissionModalJob.actionType === "direct" 
-                  ? `You are about to visit the external application portal for ${permissionModalJob.job.company}.`
+                  ? (permissionModalJob.job.is_fallback_url 
+                      ? `You are about to visit the generic careers page for ${permissionModalJob.job.company} to search for this role manually.`
+                      : `You are about to visit the external application portal for ${permissionModalJob.job.company}.`)
                   : `Draft a personalized cold outreach message to the hiring team at ${permissionModalJob.job.company}.`
                 }
               </p>
@@ -247,21 +251,36 @@ export default function JobsPage() {
             <div className="space-y-4">
               {/* Search Bar */}
               <GlassCard className="p-3">
-                <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <input
-                      type="text"
-                      placeholder="Search roles (e.g., Software Engineer)"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
-                    />
+                <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-[2]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                      <input
+                        type="text"
+                        placeholder="Search roles (e.g., Software Engineer)"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                      />
+                    </div>
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                      <input
+                        type="text"
+                        placeholder="Location (e.g., Remote, NY)"
+                        value={location}
+                        onChange={(e) => setLocationFilter(e.target.value)}
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                      />
+                    </div>
+                    <button type="button" onClick={() => setRemoteOnly(!remoteOnly)} className={`flex items-center justify-center px-4 rounded-xl text-sm font-bold border transition-colors ${remoteOnly ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' : 'bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-white'}`}>
+                      Remote Only
+                    </button>
+                    <button type="submit" className="cf-button-primary px-6 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      Search
+                    </button>
                   </div>
-                  <button type="submit" className="cf-button-primary px-4 rounded-xl text-sm font-bold flex items-center gap-2">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    Search
-                  </button>
                 </form>
               </GlassCard>
 
@@ -381,8 +400,8 @@ export default function JobsPage() {
                             onClick={() => setPermissionModalJob({ job, actionType: "direct" })}
                             className="cf-button-primary flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all"
                           >
-                            <span>Apply Now</span>
-                            <ExternalLink className="h-4 w-4" />
+                            <span className="truncate">{job.is_fallback_url ? `View ${job.company} Careers` : "Apply Now"}</span>
+                            <ExternalLink className="h-4 w-4 shrink-0" />
                           </button>
 
                           <button

@@ -193,10 +193,9 @@ export default function OutreachPage() {
               </div>
             </div>
 
-            {/* Recruiter Selector */}
             <div className="space-y-1.5 pt-1">
               <label className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
-                Public Recruiters Found 
+                {recruiters.length > 0 ? "Public Recruiters Found" : "No public recruiters found (Enter Manually)"}
                 {recruiters.length > 0 && <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px]">{recruiters.length}</span>}
               </label>
               {recruiters.length > 0 ? (

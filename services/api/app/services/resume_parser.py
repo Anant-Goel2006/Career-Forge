@@ -116,13 +116,8 @@ class ResumeParser:
 
             full_text = ""
             for page in doc:
-                # Use "blocks" extraction to preserve physical layout ordering
-                blocks = page.get_text("blocks")
-                # Sort blocks by Y coordinate (vertical position), then X coordinate
-                blocks.sort(key=lambda b: (b[1], b[0]))
-                for b in blocks:
-                    if b[6] == 0:  # 0 indicates a text block
-                        full_text += b[4] + "\n"
+                # Use "text" extraction with sort=True to preserve logical reading order
+                full_text += page.get_text("text", sort=True) + "\n"
 
             sections = await self._identify_sections(full_text)
 
@@ -220,6 +215,12 @@ Example Output should parse Jane Smith into contact, Java/C++/Spring Boot into s
                     
                 if parsed_data.certifications: sections.append({"section_type": "certifications", "raw_text": ", ".join(parsed_data.certifications)})
                 if parsed_data.general: sections.append({"section_type": "general", "raw_text": parsed_data.general})
+
+                # Validation step: ensure extraction didn't hallucinate an empty resume
+                has_experience = any(s["section_type"] == "experience" for s in sections)
+                has_skills = any(s["section_type"] == "skills" for s in sections)
+                if not sections or (not has_experience and not has_skills and not parsed_data.contact):
+                    raise ValidationError("AI extraction returned empty/invalid result. Resume may be unreadable.")
 
                 # Lightweight cross-check
                 has_email_regex = bool(re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text))

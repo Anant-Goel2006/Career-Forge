@@ -38,8 +38,8 @@ class RecruiterDiscoveryService:
                     # Basic extraction of title and link from DDG HTML
                     # DDG HTML uses <a class="result__url" href="..."> and <h2 class="result__title">
                     
-                    # Regex to find result blocks
-                    blocks = re.findall(r'<h2 class="result__title">.*?<a class="result__url" href="([^"]+)">(.*?)</a>', response.text, re.IGNORECASE | re.DOTALL)
+                    # Regex to find result blocks: DuckDuckGo uses class="result__a" for the title link inside h2
+                    blocks = re.findall(r'<h2 class="result__title">\s*<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', response.text, re.IGNORECASE | re.DOTALL)
                     
                     for link, title_html in blocks:
                         # Clean HTML from title
@@ -58,7 +58,7 @@ class RecruiterDiscoveryService:
                                 name=name,
                                 role=role,
                                 source_url=link,
-                                confidence="Likely"
+                                confidence="Likely" if name != "Unknown" else "Unconfirmed"
                             ).model_dump())
                             
                             if len(results) >= 3:
